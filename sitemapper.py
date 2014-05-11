@@ -15,27 +15,34 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 
 
-
-
-
 # exception types
 
 
 class Crawler():
-    def __init__(self, site, insecure=False):
-        self.site = site
+    def __init__(self, site, insecure=False, exclude=[]):
+        if re.compile("^http(s?)://").search(site):
+            self.site = site
+        else:
+            self.site = 'http://%s' % site
+
         self.sitemap = defaultdict(dict)
         self.verify = not insecure
+        self.exclude = exclude
 
     def check(self, item, attr):
         value = item[attr]
+
+        if item.name == 'img':
+            return False
+
         if isinstance(value, six.string_types):
             if re.compile("^/(?!/)").search(value):
                 return True
             if value.startswith('mailto:'):
                 return False
-        if attr in ('href', 'src', 'action', ):
-            if re.compile("^http(?s)://").search(value):
+
+        elif attr in ('href', 'src', 'action', ):
+            if re.compile("^http(s?)://").search(value):
                 return False
             else:
                 return True
@@ -49,6 +56,7 @@ class Crawler():
         r = requests.get(url, verify=self.verify)
         if ((r.status_code != requests.codes.ok or
              'text/html' not in r.headers['content-type'])):
+            print "Found %s on %s" % (r.status_code, url)
             return
 
         self.sitemap[root] = defaultdict(list)
@@ -63,7 +71,8 @@ class Crawler():
 
                     what = re.compile("[\?#]").split(i[attr])[0]
                     if what not in self.sitemap[root][key]:
-                        self.sitemap[root][key].append(what)
+                        if True not in [x in what for x in self.exclude]:
+                            self.sitemap[root][key].append(what)
         del soup, r
 
         self.sitemap[root]['links'].sort()
@@ -71,6 +80,7 @@ class Crawler():
 
         for i in self.sitemap[root]['links']:
             if i not in self.sitemap:
+                print "Crawling %s from %s" % (i, root)
                 self.crawl(root=i)
 
     def export(self):
@@ -79,15 +89,15 @@ class Crawler():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--exclude', '-x', action='append', default=[],
+                        help="Exclude URLs matching specified pattern")
     parser.add_argument('--insecure', '-k', action='store_true',
                         help="Disable SSL certificate verification")
     parser.add_argument('--verbose', '-v', action='count',
                         help="Enable verbose logging")
     parser.add_argument('site', help="Site to crawl and limit requests to")
-    # auth support?
 
     args = parser.parse_args()
-
     if args.verbose == 1:
         log_level = logging.INFO
     elif args.verbose > 1:
@@ -99,11 +109,11 @@ def main():
     logging.basicConfig(format=log_format, level=log_level,
                         datefmt='%c', stream=sys.stdout)
 
-    crawler = Crawler(args.site, args.insecure)
+    crawler = Crawler(args.site, args.insecure, args.exclude)
     crawler.crawl()
     sitemap = crawler.export()
-    print json.dumps(sitemap, sort_keys=True,
-                     indent=4, separators=(',', ': '))
+    print(json.dumps(sitemap, sort_keys=True,
+                     indent=4, separators=(',', ': ')))
 
 
 if __name__ == "__main__":
