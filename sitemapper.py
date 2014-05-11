@@ -12,6 +12,7 @@ import requests
 import six
 
 from bs4 import BeautifulSoup
+from collections import defaultdict
 
 
 # setup log format...
@@ -24,13 +25,12 @@ from bs4 import BeautifulSoup
 class Crawler():
     def __init__(self, site):
         self.site = site
-        self.sitemap = {}
+        self.sitemap = defaultdict(dict)
 
     def crawl(self, root='/'):
-        if root not in self.sitemap:
-            self.sitemap[root] = {}
+        self.sitemap[root] = defaultdict(list)
 
-        r = requests.get(self.site)
+        r = requests.get(self.site + root)
         if r.status_code is not requests.codes.ok:
             raise Exception("Error fetching %s: %s" % (self.site, r))
 
@@ -39,11 +39,15 @@ class Crawler():
             for attr in i.attrs:
                 if ((isinstance(i[attr], six.string_types) and
                      re.compile("^/(?!/)").search(i[attr]))):
-                    if attr not in self.sitemap[root]:
-                        self.sitemap[root][attr] = []
                     if i[attr] not in self.sitemap[root][attr]:
+                        print i.name
                         self.sitemap[root][attr].append(i[attr])
 
+        return
+        for i in self.sitemap[root]['href']:
+            if i not in self.sitemap:
+                print "Crawling %s" % i
+                self.crawl(root=i)
 
     def export(self):
         return self.sitemap
