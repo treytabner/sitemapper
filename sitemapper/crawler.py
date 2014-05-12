@@ -23,6 +23,8 @@ def parse_args():
                         help="Disable SSL certificate verification")
     parser.add_argument('--debug', '-d', action='store_true',
                         help="Enable debug logging")
+    parser.add_argument('--simulate', '-s', action='store_true',
+                        help="Don't actually do anything on the network")
     parser.add_argument('site', help="Site to crawl and limit requests to")
     return parser.parse_args()
 
@@ -41,7 +43,8 @@ def setup_logging(debug=False):
 
 class Crawler(object):
     """Crawler that fetches website content and generates a sitemap"""
-    def __init__(self, site, insecure=False, debug=False, exclude=None):
+    def __init__(self, site, insecure=False, debug=False,
+                 exclude=None, simulate=False):
         setup_logging(debug=debug)
 
         self.sitemap = collections.defaultdict(dict)
@@ -49,12 +52,14 @@ class Crawler(object):
         self.verify = not insecure
         self.debug = debug
         self.exclude = exclude if exclude else []
+        self.requests = requests
+        self.simulate = simulate
 
     def fetch(self, url):
         """Fetch content only if it's on the same domain, ignore binaries"""
 
         # Fetch headers
-        response = requests.head(url, verify=self.verify)
+        response = self.requests.head(url, verify=self.verify)
 
         # Only if HTML content was found
         if ((response.status_code != requests.codes['not_found'] and
@@ -65,7 +70,8 @@ class Crawler(object):
             if not location or util.same_site(self.site, location):
 
                 # Fetch the actual content
-                response = requests.get(location or url, verify=self.verify)
+                response = self.requests.get(location or url,
+                                             verify=self.verify)
 
                 # Return if not an HTTP 200 or not text/html
                 if ((response.status_code == requests.codes['ok'] and
@@ -77,7 +83,7 @@ class Crawler(object):
         url = util.fix_root(self.site, root)
         self.sitemap[root] = collections.defaultdict(list)
 
-        content = self.fetch(url)
+        content = '' if self.simulate else self.fetch(url)
         if content:
             # Parse the HTML and clean up
             soup = BeautifulSoup(content)
@@ -110,7 +116,8 @@ def main():
     crawler = Crawler(args.site,
                       insecure=args.insecure,
                       debug=args.debug,
-                      exclude=args.exclude)
+                      exclude=args.exclude,
+                      simulate=args.simulate)
     sitemap = crawler.generate()
     print(json.dumps(sitemap, sort_keys=True,
                      indent=4, separators=(',', ': ')))
