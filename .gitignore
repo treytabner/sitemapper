@@ -9,3 +9,6 @@ share
 *.swp
 
 *.egg-info
+
+htmlcov
+.coverage
