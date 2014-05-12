@@ -84,21 +84,20 @@ class Crawler(object):
         self.sitemap[root] = collections.defaultdict(list)
 
         content = self.fetch(url)
-        if not content:
-            return
+        if content:
+            # Parse the HTML and clean up
+            soup = BeautifulSoup(content)
+            for i in soup.find_all():
+                for attr in i.attrs:
+                    if util.check_link(i, attr):
+                        key = util.get_key(i.name)
+                        base = util.get_base(i[attr])
+                        if base and base not in self.sitemap[root][key]:
+                            if ((True not in
+                                 [x in base for x in self.args.exclude])):
+                                self.sitemap[root][key].append(base)
 
-        # Parse the HTML and clean up
-        soup = BeautifulSoup(content)
-        for i in soup.find_all():
-            for attr in i.attrs:
-                if util.check_link(i, attr):
-                    key = util.get_key(i.name)
-                    base = util.get_base(i[attr])
-                    if base and base not in self.sitemap[root][key]:
-                        if True not in [x in base for x in self.args.exclude]:
-                            self.sitemap[root][key].append(base)
-
-        del soup, content
+            del soup, content
 
         self.sitemap[root]['links'].sort()
         self.sitemap[root]['assets'].sort()
