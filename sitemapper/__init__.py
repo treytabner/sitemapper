@@ -3,6 +3,7 @@
 """Crawl a website and generate a sitemap, limiting requests to domain only"""
 
 import argparse
+import collections
 import json
 import logging
 import re
@@ -12,10 +13,6 @@ import requests
 import six
 
 from bs4 import BeautifulSoup
-from collections import defaultdict
-
-
-# exception types
 
 
 class Crawler():
@@ -25,15 +22,12 @@ class Crawler():
         else:
             self.site = 'http://%s' % site
 
-        self.sitemap = defaultdict(dict)
+        self.sitemap = collections.defaultdict(dict)
         self.verify = not insecure
         self.exclude = exclude
 
     def check(self, item, attr):
         value = item[attr]
-
-        if item.name == 'img':
-            return False
 
         if isinstance(value, six.string_types):
             if re.compile("^/(?!/)").search(value):
@@ -56,10 +50,9 @@ class Crawler():
         r = requests.get(url, verify=self.verify)
         if ((r.status_code != requests.codes.ok or
              'text/html' not in r.headers['content-type'])):
-            print "Found %s on %s" % (r.status_code, url)
             return
 
-        self.sitemap[root] = defaultdict(list)
+        self.sitemap[root] = collections.defaultdict(list)
         soup = BeautifulSoup(r.text)
         for i in soup.find_all():
             for attr in i.attrs:
@@ -69,7 +62,7 @@ class Crawler():
                     else:
                         key = 'assets'
 
-                    what = re.compile("[\?#]").split(i[attr])[0]
+                    what = re.compile("[\\?#]").split(i[attr])[0]
                     if what not in self.sitemap[root][key]:
                         if True not in [x in what for x in self.exclude]:
                             self.sitemap[root][key].append(what)
@@ -80,10 +73,8 @@ class Crawler():
 
         for i in self.sitemap[root]['links']:
             if i not in self.sitemap:
-                print "Crawling %s from %s" % (i, root)
                 self.crawl(root=i)
 
-    def export(self):
         return self.sitemap
 
 
@@ -110,8 +101,7 @@ def main():
                         datefmt='%c', stream=sys.stdout)
 
     crawler = Crawler(args.site, args.insecure, args.exclude)
-    crawler.crawl()
-    sitemap = crawler.export()
+    sitemap = crawler.crawl()
     print(json.dumps(sitemap, sort_keys=True,
                      indent=4, separators=(',', ': ')))
 

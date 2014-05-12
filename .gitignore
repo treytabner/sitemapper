@@ -6,3 +6,5 @@ share
 
 *.pyc
 *.swp
+
+*.egg-info
