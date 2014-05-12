@@ -105,7 +105,7 @@ class Crawler(object):
     def fetch(self, url):
         """Fetch content only if it's on the same domain, ignore binaries"""
 
-        # Fetch content
+        # Fetch headers
         response = requests.head(url, verify=self.verify)
 
         # Return if not found or not text/html, we don't want binaries
