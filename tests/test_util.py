@@ -24,6 +24,7 @@ def test_fix_site():
     """Tests for sitemapper.util.fix_site"""
     from sitemapper.util import fix_site
 
+    # Make sure the default http:// is added if needed
     assert fix_site('treytabner.com') == 'http://treytabner.com'
     assert fix_site('http://treytabner.com') == 'http://treytabner.com'
     assert fix_site('https://treytabner.com') == 'https://treytabner.com'
@@ -34,6 +35,7 @@ def test_fix_root():
     """Tests for sitemapper.util.fix_root"""
     from sitemapper.util import fix_root
 
+    # Make sure the / is added as needed
     assert (fix_root('http://example.com', '/contact') ==
             'http://example.com/contact')
     assert (fix_root('http://example.com', 'contact') ==
@@ -44,6 +46,7 @@ def test_get_key():
     """Tests for sitemapper.util.get_key"""
     from sitemapper.util import get_key
 
+    # Make sure specific element types match
     assert get_key('a') == 'links'
     assert get_key('form') == 'links'
     assert get_key('img') == 'assets'
@@ -55,6 +58,7 @@ def test_get_base():
     """Tests for sitemapper.util.get_base"""
     from sitemapper.util import get_base
 
+    # Make sure we can strip URLs properly
     assert get_base('/example') == '/example'
     assert get_base('/example#footer') == '/example'
     assert get_base('/example?test=1') == '/example'
@@ -64,6 +68,7 @@ def test_same_site():
     """Tests for sitemapper.util.same_site"""
     from sitemapper.util import same_site
 
+    # Make sure same domains succeed
     assert same_site('http://example.com',
                      'http://example.com') is True
     assert same_site('http://example.com',
@@ -73,6 +78,7 @@ def test_same_site():
     assert same_site('http://example.com',
                      'https://example.com/new') is True
 
+    # Make sure different domains fail
     assert same_site('http://example.com',
                      'http://other.example.com') is False
     assert same_site('http://example.com',
