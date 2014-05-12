@@ -1,39 +1,9 @@
 """Tests for sitemapper: Python based crawler and sitemap generator"""
 
 
-def test_parse_args():
-    """Tests for sitemapper.main.parse_args"""
-    from shlex import split
-    from sitemapper.main import parse_args
-
-    args = parse_args(split("www.example.com"))
-    assert args.site == 'www.example.com'
-    assert args.insecure is False
-    assert args.debug is False
-    assert args.exclude == []
-
-    args = parse_args(split("--insecure https://www.example.com"))
-    assert args.site == 'https://www.example.com'
-    assert args.insecure is True
-    assert args.debug is False
-    assert args.exclude == []
-
-    args = parse_args(split("-d --exclude test http://www.example.com"))
-    assert args.site == 'http://www.example.com'
-    assert args.insecure is False
-    assert args.debug is True
-    assert args.exclude == ['test']
-
-    args = parse_args(split("--debug -x test1 -x test2 example.com"))
-    assert args.site == 'example.com'
-    assert args.insecure is False
-    assert args.debug is True
-    assert args.exclude == ['test1', 'test2']
-
-
 def test_check_link():
-    """Tests for sitemapper.main.check_link"""
-    from sitemapper.main import check_link
+    """Tests for sitemapper.util.check_link"""
+    from sitemapper.util import check_link
 
     # Local links
     assert check_link({'href': '/contact'}, 'href') is True
@@ -50,8 +20,8 @@ def test_check_link():
 
 
 def test_fix_site():
-    """Tests for sitemapper.main.fix_site"""
-    from sitemapper.main import fix_site
+    """Tests for sitemapper.util.fix_site"""
+    from sitemapper.util import fix_site
 
     assert fix_site('treytabner.com') == 'http://treytabner.com'
     assert fix_site('http://treytabner.com') == 'http://treytabner.com'
@@ -60,8 +30,8 @@ def test_fix_site():
 
 
 def test_fix_root():
-    """Tests for sitemapper.main.fix_root"""
-    from sitemapper.main import fix_root
+    """Tests for sitemapper.util.fix_root"""
+    from sitemapper.util import fix_root
 
     assert (fix_root('http://example.com', '/contact') ==
             'http://example.com/contact')
@@ -70,8 +40,8 @@ def test_fix_root():
 
 
 def test_get_key():
-    """Tests for sitemapper.main.get_key"""
-    from sitemapper.main import get_key
+    """Tests for sitemapper.util.get_key"""
+    from sitemapper.util import get_key
 
     assert get_key('a') == 'links'
     assert get_key('form') == 'links'
@@ -81,8 +51,8 @@ def test_get_key():
 
 
 def test_get_base():
-    """Tests for sitemapper.main.get_base"""
-    from sitemapper.main import get_base
+    """Tests for sitemapper.util.get_base"""
+    from sitemapper.util import get_base
 
     assert get_base('/example') == '/example'
     assert get_base('/example#footer') == '/example'
@@ -90,8 +60,8 @@ def test_get_base():
 
 
 def test_same_site():
-    """Tests for sitemapper.main.same_site"""
-    from sitemapper.main import same_site
+    """Tests for sitemapper.util.same_site"""
+    from sitemapper.util import same_site
 
     assert same_site('http://example.com',
                      'http://example.com') is True
