@@ -43,7 +43,7 @@ def setup_logging(debug=False):
 class Crawler(object):
     """Crawler that fetches website content and generates a sitemap"""
     def __init__(self):
-        self.args = parse_args()
+        self.args = parse_args(args=sys.argv[1:])
         setup_logging(debug=self.args.debug)
 
         self.sitemap = collections.defaultdict(dict)
