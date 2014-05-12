@@ -6,7 +6,7 @@ Sitemapper is a Python-based website crawler that generates a sitemap in JSON fo
 
 To install Sitemapper, run:
 
-> pip install -e .
+> pip install git+https://github.com/treytabner/sitemapper.git
 
 This will install any dependencies such as Python requests and BeautifulSoup.
 
