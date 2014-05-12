@@ -10,7 +10,7 @@ To install Sitemapper, run:
 
 This will install any dependencies such as Python requests and BeautifulSoup.
 
-## Execution
+### Execution
 
 To execute Sitemapper, run:
 
@@ -36,13 +36,13 @@ If you want to use a Python Virtualenv, go ahead and set it up, for example:
 
 > virtualenv . && source bin/activate
 
-## Editable Installation
+### Editable Installation
 
 Install sitemapper in editable mode, along with dependencies:
 
 > pip install -e .
 
-## Testing
+### Testing
 
 To run unit tests, use:
 
