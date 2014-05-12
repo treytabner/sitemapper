@@ -46,10 +46,6 @@ def get_base(url):
 
 def same_site(old, new):
     """Compare two sites to see if they are the same domain name"""
-    if '://' in old:
-        old = old.split('://')[1]
-
-    if '://' in new:
-        new = new.split('://')[1]
-
+    old = old.split('://')[1] if '://' in old else old
+    new = new.split('://')[1] if '://' in new else new
     return new.startswith(old)
