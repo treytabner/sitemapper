@@ -56,27 +56,21 @@ class Crawler(object):
         # Fetch headers
         response = requests.head(url, verify=self.verify)
 
-        # Return if not found or not text/html, we don't want binaries
-        if ((response.status_code == requests.codes['not_found'] or
-             'text/html' not in response.headers['content-type'])):
-            logging.debug("Skipping binary or content not found: %s", url)
-            return
+        # Only if HTML content was found
+        if ((response.status_code != requests.codes['not_found'] and
+             'text/html' in response.headers['content-type'])):
 
-        # Bail if this is a redirect to another domain
-        location = response.headers.get('location')
-        if location and not util.same_site(self.site, location):
-            logging.debug("Skipping content on another domain: %s", location)
-            return
+            # Only if this is not a redirect to another domain
+            location = response.headers.get('location')
+            if not location or util.same_site(self.site, location):
 
-        # Fetch the actual content
-        response = requests.get(location or url, verify=self.verify)
+                # Fetch the actual content
+                response = requests.get(location or url, verify=self.verify)
 
-        # Return if not an HTTP 200 or not text/html
-        if ((response.status_code != requests.codes['ok'] or
-             'text/html' not in response.headers['content-type'])):
-            return
-
-        return response.text
+                # Return if not an HTTP 200 or not text/html
+                if ((response.status_code == requests.codes['ok'] and
+                     'text/html' in response.headers['content-type'])):
+                    return response.text
 
     def generate(self, root='/'):
         """Crawl provided website, generating sitemap as we go"""
