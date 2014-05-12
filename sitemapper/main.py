@@ -37,7 +37,7 @@ def setup_logging(debug=False):
 
     log_format = "[%(asctime)s] %(module)s %(levelname)s: %(message)s"
     logging.basicConfig(format=log_format, level=log_level,
-                        datefmt='%c', stream=sys.stdout)
+                        datefmt='%c', stream=sys.stderr)
 
 
 def check_link(item, attr):
