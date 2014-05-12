@@ -2,14 +2,12 @@
 
 import re
 
-import six
-
 
 def check_link(item, attr):
     """Check if we think the supplied item attribute is a local link"""
     value = item[attr]
 
-    if isinstance(value, six.string_types):
+    if isinstance(value, (str, unicode, )):
         if re.compile("^/(?!/)").search(value):
             return True
         if value.startswith('mailto:'):
