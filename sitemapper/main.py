@@ -25,20 +25,22 @@ def check_link(item, attr):
         if value.startswith('mailto:'):
             return False
 
-    elif attr in ('href', 'src', 'action', ):
-        if re.compile("^http(s?)://").search(value):
+    if attr in ('href', 'src', 'action', ):
+        if re.compile("//").search(value):
             return False
         else:
             return True
 
+    return False
+
 
 def fix_site(site):
     """Return normalized URL for website by adding http:// if necessary"""
-    return site if re.compile("^http(s?)://").search(site) \
+    return site if re.compile("://").search(site) \
         else 'http://%s' % site
 
 
-def parse_args():
+def parse_args(args=sys.argv[1:]):
     """Parse arguments, setup logging and execute sitemap generation"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exclude', '-x', action='append', default=[],
@@ -48,7 +50,7 @@ def parse_args():
     parser.add_argument('--verbose', '-v', action='count',
                         help="Enable verbose logging")
     parser.add_argument('site', help="Site to crawl and limit requests to")
-    return parser.parse_args()
+    return parser.parse_args(args=args)
 
 
 def setup_logging(verbosity):
