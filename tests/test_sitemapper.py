@@ -87,3 +87,26 @@ def test_get_base():
     assert get_base('/example') == '/example'
     assert get_base('/example#footer') == '/example'
     assert get_base('/example?test=1') == '/example'
+
+
+def test_same_site():
+    """Tests for sitemapper.main.same_site"""
+    from sitemapper.main import same_site
+
+    assert same_site('http://example.com',
+                     'http://example.com') is True
+    assert same_site('http://example.com',
+                     'http://example.com/new') is True
+    assert same_site('http://example.com',
+                     'https://example.com') is True
+    assert same_site('http://example.com',
+                     'https://example.com/new') is True
+
+    assert same_site('http://example.com',
+                     'http://other.example.com') is False
+    assert same_site('http://example.com',
+                     'http://other.example.com/new') is False
+    assert same_site('http://example.com',
+                     'https://other.example.com') is False
+    assert same_site('http://example.com',
+                     'https://other.example.com/new') is False

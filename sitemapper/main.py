@@ -81,6 +81,17 @@ def get_base(url):
     return re.compile("[\\?#]").split(url)[0]
 
 
+def same_site(old, new):
+    """Compare two sites to see if they are the same domain name"""
+    if '://' in old:
+        old = old.split('://')[1]
+
+    if '://' in new:
+        new = new.split('://')[1]
+
+    return new.startswith(old)
+
+
 class Crawler(object):
     """Crawler that fetches website content and generates a sitemap"""
     def __init__(self):
@@ -91,22 +102,45 @@ class Crawler(object):
         self.verify = not self.args.insecure
         self.site = fix_site(self.args.site)
 
-    def generate(self, root='/'):
-        """Crawl provided website, generating sitemap as we go"""
-        url = fix_root(self.site, root)
+    def fetch(self, url):
+        """Fetch content only if it's on the same domain, ignore binaries"""
 
         # Fetch content
-        response = requests.get(url, verify=self.verify)
+        response = requests.head(url, verify=self.verify)
+
+        # Return if not found or not text/html, we don't want binaries
+        if ((response.status_code == requests.codes['not_found'] or
+             'text/html' not in response.headers['content-type'])):
+            logging.debug("Skipping binary or content not found: %s", url)
+            return
+
+        # Bail if this is a redirect to another domain
+        location = response.headers.get('location')
+        if location and not same_site(self.site, location):
+            logging.debug("Skipping content on another domain: %s", location)
+            return
+
+        # Fetch the actual content
+        response = requests.get(location or url, verify=self.verify)
 
         # Return if not an HTTP 200 or not text/html
         if ((response.status_code != requests.codes['ok'] or
              'text/html' not in response.headers['content-type'])):
             return
 
+        return response.text
+
+    def generate(self, root='/'):
+        """Crawl provided website, generating sitemap as we go"""
+        url = fix_root(self.site, root)
         self.sitemap[root] = collections.defaultdict(list)
 
-        # Parse the HTML
-        soup = BeautifulSoup(response.text)
+        content = self.fetch(url)
+        if not content:
+            return
+
+        # Parse the HTML and clean up
+        soup = BeautifulSoup(content)
         for i in soup.find_all():
             for attr in i.attrs:
                 if check_link(i, attr):
@@ -115,11 +149,12 @@ class Crawler(object):
                     if base not in self.sitemap[root][key]:
                         if True not in [x in base for x in self.args.exclude]:
                             self.sitemap[root][key].append(base)
-        del soup, response
+        del soup, content
 
         self.sitemap[root]['links'].sort()
         self.sitemap[root]['assets'].sort()
 
+        # Recursively crawl other links that we haven't seen yet
         for i in self.sitemap[root]['links']:
             if i not in self.sitemap:
                 self.generate(root=i)
