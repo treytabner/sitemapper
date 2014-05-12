@@ -15,7 +15,9 @@ This will install any dependencies such as Python requests and BeautifulSoup.
 To execute Sitemapper, run:
 
 > sitemapper --help
+
 > sitemapper www.tabner.com
+
 > sitemapper --debug --exclude community www.digitalocean.com
 
 The --debug option will print output for the various HTTP requests to stderr.
