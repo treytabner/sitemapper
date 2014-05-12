@@ -17,6 +17,7 @@ def test_check_link():
     assert check_link({'class': ['menu']}, 'class') is False
     assert check_link({'type': 'text/javascript'}, 'type') is False
     assert check_link({'value': 'submit'}, 'value') is False
+    assert check_link({'href': 'mailto:trey@tabner.com'}, 'href') is False
 
 
 def test_fix_site():

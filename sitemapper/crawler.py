@@ -94,9 +94,10 @@ class Crawler(object):
                 if util.check_link(i, attr):
                     key = util.get_key(i.name)
                     base = util.get_base(i[attr])
-                    if base not in self.sitemap[root][key]:
+                    if base and base not in self.sitemap[root][key]:
                         if True not in [x in base for x in self.args.exclude]:
                             self.sitemap[root][key].append(base)
+
         del soup, content
 
         self.sitemap[root]['links'].sort()
@@ -116,7 +117,3 @@ def main():
     sitemap = crawler.generate()
     print(json.dumps(sitemap, sort_keys=True,
                      indent=4, separators=(',', ': ')))
-
-
-if __name__ == "__main__":
-    sys.exit(main())

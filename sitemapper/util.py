@@ -16,9 +16,7 @@ def check_link(item, attr):
             return False
 
     if attr in ('href', 'src', 'action', ):
-        if re.compile("//").search(value):
-            return False
-        else:
+        if not re.compile("//").search(value):
             return True
 
     return False
