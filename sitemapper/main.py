@@ -32,22 +32,50 @@ def check_link(item, attr):
             return True
 
 
+def fix_site(site):
+    """Return normalized URL for website by adding http:// if necessary"""
+    return site if re.compile("^http(s?)://").search(site) \
+        else 'http://%s' % site
+
+
+def parse_args():
+    """Parse arguments, setup logging and execute sitemap generation"""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--exclude', '-x', action='append', default=[],
+                        help="Exclude URLs matching specified pattern")
+    parser.add_argument('--insecure', '-k', action='store_true',
+                        help="Disable SSL certificate verification")
+    parser.add_argument('--verbose', '-v', action='count',
+                        help="Enable verbose logging")
+    parser.add_argument('site', help="Site to crawl and limit requests to")
+    return parser.parse_args()
+
+
+def setup_logging(verbosity):
+    """Setup logging based on specified verbosity"""
+    if verbosity == 1:
+        log_level = logging.INFO
+    elif verbosity > 1:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.WARNING
+
+    log_format = "[%(asctime)s] %(module)s %(levelname)s: %(message)s"
+    logging.basicConfig(format=log_format, level=log_level,
+                        datefmt='%c', stream=sys.stdout)
+
+
 class Crawler(object):
     """Crawler that fetches website content and generates a sitemap"""
-    def __init__(self, site, insecure=False, exclude=None):
-        if re.compile("^http(s?)://").search(site):
-            self.site = site
-        else:
-            self.site = 'http://%s' % site
+    def __init__(self):
+        self.args = parse_args()
+        setup_logging(self.args.verbose)
 
         self.sitemap = collections.defaultdict(dict)
-        self.verify = not insecure
+        self.verify = not self.args.insecure
+        self.site = fix_site(self.args.site)
 
-        if exclude is None:
-            exclude = []
-        self.exclude = exclude
-
-    def crawl(self, root='/'):
+    def generate(self, root='/'):
         """Crawl provided website, generating sitemap as we go"""
         if root.startswith('/'):
             url = '%s%s' % (self.site, root)
@@ -55,7 +83,7 @@ class Crawler(object):
             url = '%s/%s' % (self.site, root)
 
         response = requests.get(url, verify=self.verify)
-        if ((response.status_code != requests.codes.ok or
+        if ((response.status_code != requests.codes['ok'] or
              'text/html' not in response.headers['content-type'])):
             return
 
@@ -71,7 +99,7 @@ class Crawler(object):
 
                     what = re.compile("[\\?#]").split(i[attr])[0]
                     if what not in self.sitemap[root][key]:
-                        if True not in [x in what for x in self.exclude]:
+                        if True not in [x in what for x in self.args.exclude]:
                             self.sitemap[root][key].append(what)
         del soup, response
 
@@ -80,36 +108,15 @@ class Crawler(object):
 
         for i in self.sitemap[root]['links']:
             if i not in self.sitemap:
-                self.crawl(root=i)
+                self.generate(root=i)
 
         return self.sitemap
 
 
 def main():
-    """Parse arguments, setup logging and execute sitemap generation"""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--exclude', '-x', action='append', default=[],
-                        help="Exclude URLs matching specified pattern")
-    parser.add_argument('--insecure', '-k', action='store_true',
-                        help="Disable SSL certificate verification")
-    parser.add_argument('--verbose', '-v', action='count',
-                        help="Enable verbose logging")
-    parser.add_argument('site', help="Site to crawl and limit requests to")
-
-    args = parser.parse_args()
-    if args.verbose == 1:
-        log_level = logging.INFO
-    elif args.verbose > 1:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.WARNING
-
-    log_format = "[%(asctime)s] %(module)s %(levelname)s: %(message)s"
-    logging.basicConfig(format=log_format, level=log_level,
-                        datefmt='%c', stream=sys.stdout)
-
-    crawler = Crawler(args.site, args.insecure, args.exclude)
-    sitemap = crawler.crawl()
+    """Instantiate a crawler, generate the sitemap and display in JSON"""
+    crawler = Crawler()
+    sitemap = crawler.generate()
     print(json.dumps(sitemap, sort_keys=True,
                      indent=4, separators=(',', ': ')))
 
