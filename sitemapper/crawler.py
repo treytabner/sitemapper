@@ -46,7 +46,7 @@ class Crawler(object):
     def __init__(self, site, **kwargs):
         setup_logging(debug=kwargs.get('debug'))
         self.requests = requests
-        self.sitemap = collections.defaultdict(dict)
+        self.sitemap = {}
         self.site = util.fix_site(site)
         self.verify = not kwargs.get('insecure', False)
         self.debug = kwargs.get('debug', False)
@@ -67,9 +67,10 @@ class Crawler(object):
             location = response.headers.get('location')
             if not location or util.same_site(self.site, location):
 
-                # Fetch the actual content
+                # Fetch the actual content (stream so we can ignore binaries)
                 response = self.requests.get(location or url,
-                                             verify=self.verify)
+                                             verify=self.verify,
+                                             stream=True)
 
                 # Return if not an HTTP 200 or not text/html
                 if ((response.status_code == requests.codes['ok'] and
@@ -79,10 +80,11 @@ class Crawler(object):
     def generate(self, root='/'):
         """Crawl provided website, generating sitemap as we go"""
         url = util.fix_root(self.site, root)
-        self.sitemap[root] = collections.defaultdict(list)
 
         content = '' if self.simulate else self.fetch(url)
         if content:
+            self.sitemap[root] = collections.defaultdict(list)
+
             # Parse the HTML and clean up
             soup = BeautifulSoup(content)
             for i in soup.find_all():
@@ -97,13 +99,17 @@ class Crawler(object):
 
             del soup, content
 
-        self.sitemap[root]['links'].sort()
-        self.sitemap[root]['assets'].sort()
+            # Sort links and assets for readability
+            if 'assets' in self.sitemap[root]:
+                self.sitemap[root]['assets'].sort()
 
-        # Recursively crawl other links that we haven't seen yet
-        for i in self.sitemap[root]['links']:
-            if i not in self.sitemap:
-                self.generate(root=i)
+            if 'links' in self.sitemap[root]:
+                self.sitemap[root]['links'].sort()
+
+                # Recursively crawl other links that we haven't seen yet
+                for i in self.sitemap[root]['links']:
+                    if i not in self.sitemap:
+                        self.generate(root=i)
 
         return self.sitemap
 

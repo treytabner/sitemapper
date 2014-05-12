@@ -18,7 +18,7 @@ To execute Sitemapper, run:
 
 > sitemapper www.tabner.com
 
-> sitemapper --debug --exclude community www.digitalocean.com
+> sitemapper --debug --exclude community https://www.digitalocean.com
 
 The --debug option will print output for the various HTTP requests to stderr.
 
