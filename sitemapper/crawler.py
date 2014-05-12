@@ -43,17 +43,15 @@ def setup_logging(debug=False):
 
 class Crawler(object):
     """Crawler that fetches website content and generates a sitemap"""
-    def __init__(self, site, insecure=False, debug=False,
-                 exclude=None, simulate=False):
-        setup_logging(debug=debug)
-
+    def __init__(self, site, **kwargs):
+        setup_logging(debug=kwargs.get('debug'))
+        self.requests = requests
         self.sitemap = collections.defaultdict(dict)
         self.site = util.fix_site(site)
-        self.verify = not insecure
-        self.debug = debug
-        self.exclude = exclude if exclude else []
-        self.requests = requests
-        self.simulate = simulate
+        self.verify = not kwargs.get('insecure', False)
+        self.debug = kwargs.get('debug', False)
+        self.exclude = kwargs.get('exclude', [])
+        self.simulate = kwargs.get('simulate', False)
 
     def fetch(self, url):
         """Fetch content only if it's on the same domain, ignore binaries"""
