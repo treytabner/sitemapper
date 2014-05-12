@@ -16,6 +16,6 @@ setup(name='sitemapper',
       install_requires=open('requirements.txt').read().splitlines(),
       entry_points={
           'console_scripts': [
-              'sitemapper = sitemapper.main:main',
+              'sitemapper = sitemapper.crawler:main',
           ]
       })

@@ -6,13 +6,13 @@ import argparse
 import collections
 import json
 import logging
-import re
 import sys
 
 import requests
-import six
 
 from bs4 import BeautifulSoup
+
+from sitemapper import util
 
 
 def parse_args(args=sys.argv[1:]):
@@ -40,58 +40,6 @@ def setup_logging(debug=False):
                         datefmt='%c', stream=sys.stderr)
 
 
-def check_link(item, attr):
-    """Check if we think the supplied item attribute is a local link"""
-    value = item[attr]
-
-    if isinstance(value, six.string_types):
-        if re.compile("^/(?!/)").search(value):
-            return True
-        if value.startswith('mailto:'):
-            return False
-
-    if attr in ('href', 'src', 'action', ):
-        if re.compile("//").search(value):
-            return False
-        else:
-            return True
-
-    return False
-
-
-def fix_site(site):
-    """Return normalized URL for website by adding http:// if necessary"""
-    return site if re.compile("://").search(site) \
-        else 'http://%s' % site
-
-
-def fix_root(site, root):
-    """Return a normalized URL for the """
-    return '%s%s' % (site, root) if root.startswith('/') \
-        else '%s/%s' % (site, root)
-
-
-def get_key(name):
-    """Return whether or not the specified item is a link or asset"""
-    return 'links' if name in ('a', 'form', ) else 'assets'
-
-
-def get_base(url):
-    """Return the base URL, with no GET parameters or anchors"""
-    return re.compile("[\\?#]").split(url)[0]
-
-
-def same_site(old, new):
-    """Compare two sites to see if they are the same domain name"""
-    if '://' in old:
-        old = old.split('://')[1]
-
-    if '://' in new:
-        new = new.split('://')[1]
-
-    return new.startswith(old)
-
-
 class Crawler(object):
     """Crawler that fetches website content and generates a sitemap"""
     def __init__(self):
@@ -100,7 +48,7 @@ class Crawler(object):
 
         self.sitemap = collections.defaultdict(dict)
         self.verify = not self.args.insecure
-        self.site = fix_site(self.args.site)
+        self.site = util.fix_site(self.args.site)
 
     def fetch(self, url):
         """Fetch content only if it's on the same domain, ignore binaries"""
@@ -116,7 +64,7 @@ class Crawler(object):
 
         # Bail if this is a redirect to another domain
         location = response.headers.get('location')
-        if location and not same_site(self.site, location):
+        if location and not util.same_site(self.site, location):
             logging.debug("Skipping content on another domain: %s", location)
             return
 
@@ -132,7 +80,7 @@ class Crawler(object):
 
     def generate(self, root='/'):
         """Crawl provided website, generating sitemap as we go"""
-        url = fix_root(self.site, root)
+        url = util.fix_root(self.site, root)
         self.sitemap[root] = collections.defaultdict(list)
 
         content = self.fetch(url)
@@ -143,9 +91,9 @@ class Crawler(object):
         soup = BeautifulSoup(content)
         for i in soup.find_all():
             for attr in i.attrs:
-                if check_link(i, attr):
-                    key = get_key(i.name)
-                    base = get_base(i[attr])
+                if util.check_link(i, attr):
+                    key = util.get_key(i.name)
+                    base = util.get_base(i[attr])
                     if base not in self.sitemap[root][key]:
                         if True not in [x in base for x in self.args.exclude]:
                             self.sitemap[root][key].append(base)
