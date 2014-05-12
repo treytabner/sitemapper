@@ -43,23 +43,20 @@ def test_crawler():
     crawler = Crawler()
     assert crawler.site == 'http://www.example.com'
     assert crawler.sitemap == {}
-    assert crawler.verify == True
-    assert crawler.args.debug == False
+    assert crawler.verify is True
+    assert crawler.args.debug is False
     assert crawler.args.exclude == []
 
     sys.argv = split("sitemapper --debug www.example.com")
     crawler = Crawler()
     assert crawler.site == 'http://www.example.com'
     assert crawler.sitemap == {}
-    assert crawler.verify == True
-    assert crawler.args.debug == True
+    assert crawler.verify is True
+    assert crawler.args.debug is True
     assert crawler.args.exclude == []
 
 
 def test_main():
     """Tests for sitemapper.crawler.main"""
     sys.argv = split("sitemapper --debug www.tabner.com")
-    try:
-        main()
-    except Exception as exc:
-        raise
+    main()
