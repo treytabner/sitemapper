@@ -1,9 +1,15 @@
 """Tests for sitemapper: Python based crawler and sitemap generator"""
 
+from sitemapper.util import check_link
+from sitemapper.util import fix_site
+from sitemapper.util import fix_root
+from sitemapper.util import get_key
+from sitemapper.util import get_base
+from sitemapper.util import same_site
+
 
 def test_check_link():
     """Tests for sitemapper.util.check_link"""
-    from sitemapper.util import check_link
 
     # Local links
     assert check_link({'href': '/contact'}, 'href') is True
@@ -22,7 +28,6 @@ def test_check_link():
 
 def test_fix_site():
     """Tests for sitemapper.util.fix_site"""
-    from sitemapper.util import fix_site
 
     # Make sure the default http:// is added if needed
     assert fix_site('treytabner.com') == 'http://treytabner.com'
@@ -33,7 +38,6 @@ def test_fix_site():
 
 def test_fix_root():
     """Tests for sitemapper.util.fix_root"""
-    from sitemapper.util import fix_root
 
     # Make sure the / is added as needed
     assert (fix_root('http://example.com', '/contact') ==
@@ -44,7 +48,6 @@ def test_fix_root():
 
 def test_get_key():
     """Tests for sitemapper.util.get_key"""
-    from sitemapper.util import get_key
 
     # Make sure specific element types match
     assert get_key('a') == 'links'
@@ -56,7 +59,6 @@ def test_get_key():
 
 def test_get_base():
     """Tests for sitemapper.util.get_base"""
-    from sitemapper.util import get_base
 
     # Make sure we can strip URLs properly
     assert get_base('/example') == '/example'
@@ -66,7 +68,6 @@ def test_get_base():
 
 def test_same_site():
     """Tests for sitemapper.util.same_site"""
-    from sitemapper.util import same_site
 
     # Make sure same domains succeed
     assert same_site('http://example.com',
