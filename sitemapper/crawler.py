@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from sitemapper import util
 
 
-def parse_args(args=sys.argv[1:]):
+def parse_args():
     """Parse arguments, setup logging and execute sitemap generation"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exclude', '-x', action='append', default=[],
@@ -25,7 +25,7 @@ def parse_args(args=sys.argv[1:]):
     parser.add_argument('--debug', '-d', action='store_true',
                         help="Enable debug logging")
     parser.add_argument('site', help="Site to crawl and limit requests to")
-    return parser.parse_args(args=args)
+    return parser.parse_args()
 
 
 def setup_logging(debug=False):
@@ -42,13 +42,14 @@ def setup_logging(debug=False):
 
 class Crawler(object):
     """Crawler that fetches website content and generates a sitemap"""
-    def __init__(self):
-        self.args = parse_args(args=sys.argv[1:])
-        setup_logging(debug=self.args.debug)
+    def __init__(self, site, insecure=False, debug=False, exclude=None):
+        setup_logging(debug=debug)
 
         self.sitemap = collections.defaultdict(dict)
-        self.verify = not self.args.insecure
-        self.site = util.fix_site(self.args.site)
+        self.site = util.fix_site(site)
+        self.verify = not insecure
+        self.debug = debug
+        self.exclude = exclude if exclude else []
 
     def fetch(self, url):
         """Fetch content only if it's on the same domain, ignore binaries"""
@@ -88,7 +89,7 @@ class Crawler(object):
                         base = util.get_base(i[attr])
                         if base and base not in self.sitemap[root][key]:
                             if ((True not in
-                                 [x in base for x in self.args.exclude])):
+                                 [x in base for x in self.exclude])):
                                 self.sitemap[root][key].append(base)
 
             del soup, content
@@ -106,7 +107,11 @@ class Crawler(object):
 
 def main():
     """Instantiate a crawler, generate the sitemap and display in JSON"""
-    crawler = Crawler()
+    args = parse_args()
+    crawler = Crawler(args.site,
+                      insecure=args.insecure,
+                      debug=args.debug,
+                      exclude=args.exclude)
     sitemap = crawler.generate()
     print(json.dumps(sitemap, sort_keys=True,
                      indent=4, separators=(',', ': ')))
