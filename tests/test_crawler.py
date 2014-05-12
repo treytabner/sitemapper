@@ -1,8 +1,7 @@
 """Tests for sitemapper: Python based crawler and sitemap generator"""
 
-import sys
-
 from shlex import split
+import sys
 
 from sitemapper.crawler import parse_args
 from sitemapper.crawler import Crawler
