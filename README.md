@@ -18,8 +18,6 @@ To execute Sitemapper, run:
 
 > sitemapper www.tabner.com
 
-> sitemapper --debug --exclude community https://www.digitalocean.com
-
 The --debug option will print output for the various HTTP requests to stderr.
 
 The --exclude option will cause the crawler to exclude certain URLs that may otherwise cause problems.
